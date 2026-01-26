@@ -21,6 +21,12 @@ int WIDTH = 1024, HEIGHT = 768;
 float camDistance = 700.0f;
 float camYaw = 20.0f, camPitch = 28.0f;
 float camTargetX = 0.0f, camTargetY = 0.0f, camTargetZ = 0.0f;
+bool rightMousePressed = false;
+
+
+// Random helper
+static float frand01() { return (float)rand() / (float)RAND_MAX; }
+static float frand(float a, float b) { return a + (b - a) * frand01(); }
 
 
 int main() {
