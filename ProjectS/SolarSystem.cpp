@@ -27,7 +27,13 @@ bool rightMousePressed = false;
 // Random helper
 static float frand01() { return (float)rand() / (float)RAND_MAX; }
 static float frand(float a, float b) { return a + (b - a) * frand01(); }
+// ---------------- Structures ----------------
+struct Planet {
+    string name;
+    float radius;
+    float distance;
 
+};
 
 int main() {
    
