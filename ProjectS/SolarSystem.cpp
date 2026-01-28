@@ -35,6 +35,29 @@ struct Planet {
 
 };
 
+void drawSphere(float radius, int slices = 20, int stacks = 20) {
+    for (int i = 0; i < stacks; i++) {
+        float lat0 = (float)M_PI * (-0.5f + (float)i / stacks);
+        float lat1 = (float)M_PI * (-0.5f + (float)(i + 1) / stacks);
+
+        float z0 = sinf(lat0) * radius;
+        float zr0 = cosf(lat0) * radius;
+        float z1 = sinf(lat1) * radius;
+        float zr1 = cosf(lat1) * radius;
+
+        glBegin(GL_QUAD_STRIP);
+        for (int j = 0; j <= slices; j++) {
+            float lng = 2.0f * (float)M_PI * j / slices;
+            float x = cosf(lng);
+            float y = sinf(lng);
+
+            glVertex3f(x * zr0, y * zr0, z0);
+            glVertex3f(x * zr1, y * zr1, z1);
+        }
+        glEnd();
+    }
+}
+
 int main() {
    
     return 0;
