@@ -16,7 +16,7 @@
 using namespace std;
 
 // ---------------- Window ----------------
-int WIDTH = 1200, HEIGHT = 720;
+int WIDTH = 1024, HEIGHT = 768;
 
 // ---------------- Camera ----------------
 float camDistance = 700.0f;
@@ -78,7 +78,6 @@ static const float PLANET_RADIUS_SCALE = 2.0f;
 static const float SUN_SCALE = 1.5f;
 static const float DIST_SCALE = 1.18f;
 static const float MERCURY_EXTRA = 20.0f;
-// =======================================================
 
 // ---------------- Planets ----------------
 vector<Planet> planets = {
@@ -320,7 +319,7 @@ int main() {
     initMoons();
 
     if (!glfwInit()) { cerr << "GLFW init failed\n"; return -1; }
-    GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "3D Solar System (All This And We Still Mate)", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "3D Solar System (All This And We Still Mate) ", nullptr, nullptr);
     if (!window) { cerr << "Window creation failed\n"; glfwTerminate(); return -1; }
 
     glfwMakeContextCurrent(window);
