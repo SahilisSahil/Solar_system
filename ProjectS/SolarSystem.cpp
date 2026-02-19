@@ -1,8 +1,11 @@
-﻿#include <GLFW/glfw3.h>
-#include <GL/gl.h>   
+
+
+#include <GLFW/glfw3.h>
+#include <GL/gl.h>  
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
 #include <iostream>
 #include <vector>
 #include <string>
@@ -15,14 +18,6 @@
 
 using namespace std;
 
-#include <iostream>
-#include <vector>
-#include <string>
-#include <cstdlib>
-#include <ctime>
-#include <algorithm>
-#include <cmath>
-
 // ---------------- Window ----------------
 int WIDTH = 1024, HEIGHT = 768;
 
@@ -30,42 +25,82 @@ int WIDTH = 1024, HEIGHT = 768;
 float camDistance = 700.0f;
 float camYaw = 20.0f, camPitch = 28.0f;
 float camTargetX = 0.0f, camTargetY = 0.0f, camTargetZ = 0.0f;
+bool leftMousePressed = false;
 bool rightMousePressed = false;
+double lastX = 0.0, lastY = 0.0;
 
+// ---------------- Time ----------------
+float timeSpeed = 1.0f;
+int timeDirection = 1;
 
-// Random helper
+// ---------------- Random helper ----------------
 static float frand01() { return (float)rand() / (float)RAND_MAX; }
 static float frand(float a, float b) { return a + (b - a) * frand01(); }
+
 // ---------------- Structures ----------------
 struct Planet {
     string name;
     float radius;
     float distance;
+    float orbitSpeed;
+    float angle;
+    glm::vec3 color;
+    bool hasRing;
 
+    Planet(string n, float r, float d, float oSpeed, glm::vec3 c, bool ring)
+        : name(n), radius(r), distance(d), orbitSpeed(oSpeed), angle(0.0f), color(c), hasRing(ring) {
+    }
 };
 
-void drawSphere(float radius, int slices = 20, int stacks = 20) {
-    for (int i = 0; i < stacks; i++) {
-        float lat0 = (float)M_PI * (-0.5f + (float)i / stacks);
-        float lat1 = (float)M_PI * (-0.5f + (float)(i + 1) / stacks);
+struct Moon {
+    int planetIndex;
+    float radius;
+    float distance;
+    float orbitSpeed;
+    float angle;
+    glm::vec3 color;
+};
 
-        float z0 = sinf(lat0) * radius;
-        float zr0 = cosf(lat0) * radius;
-        float z1 = sinf(lat1) * radius;
-        float zr1 = cosf(lat1) * radius;
+struct SolarMeteor {
+    float dist;
+    float speed;
+    float angle;
+    float y;
+    glm::vec3 color;
+};
 
-        glBegin(GL_QUAD_STRIP);
-        for (int j = 0; j <= slices; j++) {
-            float lng = 2.0f * (float)M_PI * j / slices;
-            float x = cosf(lng);
-            float y = sinf(lng);
+struct Star {
+    float x, y, z;
+    glm::vec3 color;
+};
 
-            glVertex3f(x * zr0, y * zr0, z0);
-            glVertex3f(x * zr1, y * zr1, z1);
-        }
-        glEnd();
-    }
-}
+// =======================================================
+// SCALE SETTINGS
+// =======================================================
+static const float PLANET_RADIUS_SCALE = 2.0f;
+static const float SUN_SCALE = 1.5f;
+static const float DIST_SCALE = 1.18f;
+static const float MERCURY_EXTRA = 20.0f;
+// =======================================================
+
+// ---------------- Planets ----------------
+vector<Planet> planets = {
+    Planet("Mercury",  2.0f * PLANET_RADIUS_SCALE,   (45.0f * DIST_SCALE) + MERCURY_EXTRA, 0.020f, glm::vec3(0.55f,0.55f,0.55f), false),
+    Planet("Venus",    3.0f * PLANET_RADIUS_SCALE,    80.0f * DIST_SCALE,                  0.015f, glm::vec3(1.00f,0.90f,0.60f), false),
+    Planet("Earth",    3.2f * PLANET_RADIUS_SCALE,   120.0f * DIST_SCALE,                  0.010f, glm::vec3(0.20f,0.55f,1.00f), false),
+    Planet("Mars",     2.8f * PLANET_RADIUS_SCALE,   165.0f * DIST_SCALE,                  0.008f, glm::vec3(1.00f,0.30f,0.10f), false),
+    Planet("Jupiter",  6.5f * PLANET_RADIUS_SCALE,   240.0f * DIST_SCALE,                  0.005f, glm::vec3(0.90f,0.70f,0.45f), false),
+    Planet("Saturn",   5.5f * PLANET_RADIUS_SCALE,   330.0f * DIST_SCALE,                  0.004f, glm::vec3(1.00f,0.90f,0.55f), true),
+    Planet("Uranus",   4.8f * PLANET_RADIUS_SCALE,   430.0f * DIST_SCALE,                  0.003f, glm::vec3(0.55f,0.85f,1.00f), false),
+    Planet("Neptune",  4.5f * PLANET_RADIUS_SCALE,   540.0f * DIST_SCALE,                  0.002f, glm::vec3(0.25f,0.45f,1.00f), false),
+    Planet("Pluto",    2.5f * PLANET_RADIUS_SCALE,   650.0f * DIST_SCALE,                  0.001f, glm::vec3(0.75f,0.75f,0.75f), false)
+};
+
+// ---------------- Containers ----------------
+vector<Moon> moons;
+vector<SolarMeteor> sunMeteorsInner;
+vector<SolarMeteor> sunMeteorsOuter;
+vector<Star> stars;
 
 // ---------------- Callbacks ----------------
 void scroll_callback(GLFWwindow*, double, double yoffset) {
@@ -288,7 +323,7 @@ int main() {
     initMoons();
 
     if (!glfwInit()) { cerr << "GLFW init failed\n"; return -1; }
-    GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "3D Solar System (All This And We Still Mate) ", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "3DSolar System (All This And We Still Mate)", nullptr, nullptr);
     if (!window) { cerr << "Window creation failed\n"; glfwTerminate(); return -1; }
 
     glfwMakeContextCurrent(window);
